@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pocketbase/pocketbase.dart';
+import 'package:motion_toast/motion_toast.dart'; // ✅ import เดียวพอ
 
 class AddMemberView extends StatefulWidget {
   const AddMemberView({super.key});
@@ -31,6 +32,24 @@ class _AddMemberViewState extends State<AddMemberView> {
               'status': status,
             },
           );
+
+      if (!mounted) return;
+
+      // 🎉 Toast เท่ๆ (compatible กับ motion_toast 2.8+)
+      MotionToast.success(
+        title: const Text(
+          "เพิ่มข้อมูลสำเร็จ",
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+        ),
+        description: const Text(
+          "สมาชิกใหม่ถูกเพิ่มเรียบร้อยแล้ว!",
+          style: TextStyle(color: Colors.white70),
+        ),
+        animationCurve: Curves.easeOutBack,
+        toastDuration: const Duration(seconds: 3),
+        dismissable: true,
+      ).show(context); // ✅ ไม่มี position parameter แล้ว
+
       Navigator.pop(context, true);
     }
   }
@@ -65,7 +84,7 @@ class _AddMemberViewState extends State<AddMemberView> {
                 decoration: const InputDecoration(labelText: 'ค่าห้องพัก'),
               ),
               DropdownButtonFormField(
-                value: status,
+                initialValue: status,
                 decoration: const InputDecoration(labelText: 'สถานะ'),
                 items: const [
                   DropdownMenuItem(value: 'active', child: Text('อยู่')),
@@ -76,7 +95,21 @@ class _AddMemberViewState extends State<AddMemberView> {
               const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: addMember,
-                child: const Text('บันทึกสมาชิก'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.indigo, // 🔹 สีพื้นหลังปุ่ม
+                  foregroundColor: Colors.white, // 🔹 สีข้อความให้เป็น “ขาว”
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                ),
+                child: const Text(
+                  'บันทึกสมาชิก',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.white, // ✅ เผื่อกรณี theme override
+                  ),
+                ),
               ),
             ],
           ),

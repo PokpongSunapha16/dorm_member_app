@@ -4,6 +4,7 @@ import 'package:pocketbase/pocketbase.dart';
 import '../models.dart';
 import 'member_update_view.dart';
 import 'add_member_view.dart';
+import 'package:motion_toast/motion_toast.dart'; // ✅ เหลือแค่บรรทัดนี้
 
 class MemberListView extends StatefulWidget {
   const MemberListView({super.key});
@@ -44,6 +45,24 @@ class _MemberListViewState extends State<MemberListView> {
 
   Future<void> deleteMember(String id) async {
     await pb.collection('members').delete(id);
+
+    if (!mounted) return;
+
+    // ⚡ แสดง MotionToast สีแดงหลังลบสำเร็จ (motion_toast 2.8+ compatible)
+    MotionToast.error(
+      title: const Text(
+        "ลบข้อมูลเรียบร้อย!",
+        style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+      ),
+      description: const Text(
+        "สมาชิกถูกลบออกจากระบบแล้ว",
+        style: TextStyle(color: Colors.white70),
+      ),
+      toastDuration: const Duration(seconds: 3),
+      animationCurve: Curves.easeOutBack,
+      dismissable: true,
+    ).show(context); // ✅ ไม่มี position parameter แล้ว
+
     fetchMembers();
   }
 
@@ -59,7 +78,7 @@ class _MemberListViewState extends State<MemberListView> {
       appBar: AppBar(
         title: const Text(
           'PP SNP Dormitory VIP',
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         backgroundColor: Colors.indigo,
       ),
@@ -73,7 +92,6 @@ class _MemberListViewState extends State<MemberListView> {
         spacing: 12,
         spaceBetweenChildren: 8,
         children: [
-          // ➕ เพิ่มสมาชิกใหม่
           SpeedDialChild(
             child: const Icon(Icons.add),
             label: 'เพิ่มสมาชิก',
@@ -86,16 +104,12 @@ class _MemberListViewState extends State<MemberListView> {
               if (added == true) fetchMembers();
             },
           ),
-
-          // 🔄 รีเฟรชข้อมูล
           SpeedDialChild(
             child: const Icon(Icons.refresh),
             label: 'รีเฟรชข้อมูล',
             backgroundColor: Colors.blue,
             onTap: fetchMembers,
           ),
-
-          // 🧹 ล้างช่องค้นหา
           SpeedDialChild(
             child: const Icon(Icons.cleaning_services),
             label: 'ล้างช่องค้นหา',
@@ -132,7 +146,7 @@ class _MemberListViewState extends State<MemberListView> {
               child: GridView.builder(
                 itemCount: filteredMembers.length,
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 5, // 🔹 ปรับเป็น “แถวละ 5 การ์ด”
+                  crossAxisCount: 5, // 🔹 แถวละ 5 การ์ด
                   crossAxisSpacing: 10,
                   mainAxisSpacing: 10,
                   childAspectRatio: 0.8,
