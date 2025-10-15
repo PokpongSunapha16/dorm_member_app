@@ -4,7 +4,7 @@ import 'package:pocketbase/pocketbase.dart';
 import '../models.dart';
 import 'member_update_view.dart';
 import 'add_member_view.dart';
-import 'package:motion_toast/motion_toast.dart'; // ✅ เหลือแค่บรรทัดนี้
+import 'package:motion_toast/motion_toast.dart';
 
 class MemberListView extends StatefulWidget {
   const MemberListView({super.key});
@@ -45,10 +45,8 @@ class _MemberListViewState extends State<MemberListView> {
 
   Future<void> deleteMember(String id) async {
     await pb.collection('members').delete(id);
-
     if (!mounted) return;
 
-    // ⚡ แสดง MotionToast สีแดงหลังลบสำเร็จ (motion_toast 2.8+ compatible)
     MotionToast.error(
       title: const Text(
         "ลบข้อมูลเรียบร้อย!",
@@ -61,7 +59,7 @@ class _MemberListViewState extends State<MemberListView> {
       toastDuration: const Duration(seconds: 3),
       animationCurve: Curves.easeOutBack,
       dismissable: true,
-    ).show(context); // ✅ ไม่มี position parameter แล้ว
+    ).show(context);
 
     fetchMembers();
   }
@@ -142,108 +140,83 @@ class _MemberListViewState extends State<MemberListView> {
               ),
             ),
             const SizedBox(height: 12),
+
+            // ✅ ใช้ ListView แทน Grid
             Expanded(
-              child: GridView.builder(
+              child: ListView.builder(
                 itemCount: filteredMembers.length,
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 5, // 🔹 แถวละ 5 การ์ด
-                  crossAxisSpacing: 10,
-                  mainAxisSpacing: 10,
-                  childAspectRatio: 0.8,
-                ),
                 itemBuilder: (context, index) {
                   final member = filteredMembers[index];
                   final isActive = member.status == 'active';
-                  return GestureDetector(
-                    onTap: () async {
-                      await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => MemberUpdateView(member: member),
+
+                  return Card(
+                    elevation: 3,
+                    margin: const EdgeInsets.symmetric(
+                      vertical: 6,
+                      horizontal: 4,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: ListTile(
+                      leading: CircleAvatar(
+                        radius: 25,
+                        backgroundColor: isActive
+                            ? Colors.indigo.shade200
+                            : Colors.grey.shade400,
+                        child: Icon(
+                          Icons.person,
+                          color: isActive ? Colors.indigo : Colors.white,
                         ),
-                      );
-                      fetchMembers();
-                    },
-                    child: Card(
-                      elevation: 6,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15),
                       ),
-                      child: Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: isActive
-                                ? [
-                                    Colors.indigo.shade300,
-                                    Colors.indigo.shade100,
-                                  ]
-                                : [Colors.grey.shade400, Colors.grey.shade200],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
+                      title: Text(
+                        member.name,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 4),
+                          Text('ห้อง: ${member.roomNumber}'),
+                          Text(
+                            'ค่าเช่า: ${member.rentFee.toStringAsFixed(0)}฿',
                           ),
-                          borderRadius: BorderRadius.circular(15),
-                        ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            CircleAvatar(
-                              radius: 25,
-                              backgroundColor: Colors.white,
-                              child: Icon(
-                                Icons.person,
-                                size: 30,
-                                color: isActive ? Colors.indigo : Colors.grey,
-                              ),
+                          const SizedBox(height: 4),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
                             ),
-                            Text(
-                              member.name,
+                            decoration: BoxDecoration(
+                              color: isActive ? Colors.green : Colors.red,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              isActive ? 'อยู่' : 'ย้ายออก',
                               style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
-                              ),
-                              textAlign: TextAlign.center,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            Text(
-                              'ห้อง ${member.roomNumber}',
-                              style: const TextStyle(fontSize: 12),
-                            ),
-                            Text(
-                              '${member.rentFee.toStringAsFixed(0)}฿',
-                              style: const TextStyle(
-                                color: Colors.black87,
-                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                                fontSize: 12,
                               ),
                             ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: isActive ? Colors.green : Colors.red,
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Text(
-                                isActive ? 'อยู่' : 'ย้ายออก',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ),
-                            IconButton(
-                              icon: const Icon(
-                                Icons.delete,
-                                color: Colors.redAccent,
-                              ),
-                              onPressed: () => deleteMember(member.id),
-                            ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
+                      trailing: IconButton(
+                        icon: const Icon(Icons.delete, color: Colors.redAccent),
+                        onPressed: () => deleteMember(member.id),
+                      ),
+                      onTap: () async {
+                        await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => MemberUpdateView(member: member),
+                          ),
+                        );
+                        fetchMembers();
+                      },
                     ),
                   );
                 },
